@@ -2,6 +2,7 @@ import { Router } from 'express';
 import db from '../database';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { Order, OrderItem, TicketTier } from '../types';
+import { transformOrderItems, transformOrderDetail } from '../utils/orderTransformers';
 
 const router = Router();
 
@@ -114,33 +115,9 @@ router.get('/orders/:id', authenticateToken, requireAdmin, (req, res) => {
     WHERE oi.order_id = ?
   `).all(orderId);
 
-  const items = orderItems.map((item: any) => ({
-    ...item,
-    seat_no: `${item.row}${item.seat_number}`,
-    seatNo: `${item.row}${item.seat_number}`,
-    attendee_name: item.ticket_holder_name,
-    attendeeName: item.ticket_holder_name,
-    attendee_id_no: item.ticket_holder_id_card,
-    attendeeIdNo: item.ticket_holder_id_card,
-    qr_code: item.qr_code,
-    qrCode: item.qr_code
-  }));
+  const items = transformOrderItems(orderItems);
 
-  const anyOrder = order as any;
-  res.json({
-    ...anyOrder,
-    buyer_name: anyOrder.buyer_name,
-    buyerName: anyOrder.buyer_name,
-    buyer_phone: anyOrder.buyer_phone || '',
-    buyerPhone: anyOrder.buyer_phone || '',
-    buyer_email: anyOrder.buyer_email || '',
-    buyerEmail: anyOrder.buyer_email || '',
-    concert_title: anyOrder.title,
-    concert_artist: anyOrder.artist,
-    concert_date: anyOrder.date,
-    concert_time: anyOrder.time,
-    items
-  });
+  res.json(transformOrderDetail(order, items));
 });
 
 router.post('/orders/refund/batch', authenticateToken, requireAdmin, (req, res) => {

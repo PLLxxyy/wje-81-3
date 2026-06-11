@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import db from '../database';
 import { authenticateToken } from '../middleware/auth';
 import { Order, OrderItem, Seat } from '../types';
+import { transformOrderItems } from '../utils/orderTransformers';
 
 const router = Router();
 
@@ -241,17 +242,7 @@ router.get('/:id', authenticateToken, (req, res) => {
     WHERE oi.order_id = ?
   `).all(orderId);
 
-  const items = orderItems.map((item: any) => ({
-    ...item,
-    seat_no: `${item.row}${item.seat_number}`,
-    seatNo: `${item.row}${item.seat_number}`,
-    attendee_name: item.ticket_holder_name,
-    attendeeName: item.ticket_holder_name,
-    attendee_id_no: item.ticket_holder_id_card,
-    attendeeIdNo: item.ticket_holder_id_card,
-    qr_code: item.qr_code,
-    qrCode: item.qr_code
-  }));
+  const items = transformOrderItems(orderItems);
 
   res.json({
     ...order,
